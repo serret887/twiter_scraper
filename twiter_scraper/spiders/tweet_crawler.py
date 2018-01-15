@@ -44,11 +44,14 @@ class TweetCrawlerSpider(scrapy.Spider):
         @within=A distance radius between "near" location "20mi"
 '''
         logger.debug("STARTING TWEET SPIDER")
-        self.create_query(query, lang, since, until, user_name)
+        self.start_urls = [
+            self.create_query(query, lang, since, until, user_name, '')
+        ]
 
         pass
 
-    def create_query(self, query, lang, since, until, user_name):
+    def create_query(self, query, lang, since, until, user_name,
+                     refresh_cursor):
         '''create_query use the params from the constructor
         to create the inital query and set the start url'''
         url = self.URL
@@ -60,18 +63,24 @@ class TweetCrawlerSpider(scrapy.Spider):
         q = ''
         if user_name:
             q += 'from:' + user_name
+            logger.debug("Adding user to start url")
         if since:
             q += 'since:' + since
+            logger.debug("Adding since to start url")
         if until:
             q += 'until:' + until
+            logger.debug("Adding until to start url")
         q += query
-        options = 'lang=' + lang
-        url = url % (quote(q), options)
-        logger.debug("Start_url:", url)
-
-    def start_request(self):
-        url = self.URL
-        yield http.Request(url, callback=self.parse_page)
+        if q:
+            logger.debug("query: %s", q)
+        else:
+            q = 'bitcoin'
+            logger.warning("There is no query specified using 'bitcoin'")
+        options = 'lang=' + lang + '&'
+        url = url % (quote(q), options, refresh_cursor)
+        logger.info("Start_url:", url)
+        return url
 
     def parse(self, response):
+        logger.debug("Parsing Response")
         pass
