@@ -11,11 +11,13 @@
 
 BOT_NAME = 'twiter_scraper'
 
+LOG_LEVEL = 'DEBUG'
+
 SPIDER_MODULES = ['twiter_scraper.spiders']
 NEWSPIDER_MODULE = 'twiter_scraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'twiter_scraper (+http://www.yourdomain.com)'
+USER_AGENT = 'firefox'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -51,9 +53,11 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'twiter_scraper.middlewares.TwiterScraperDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    #    'twiter_scraper.middlewares.TwiterScraperDownloaderMiddleware': 543,
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,
+}
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html
