@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 
 import scrapy
@@ -18,8 +19,7 @@ class TweetCrawlerSpider(scrapy.Spider):
     name = 'tweet_crawler'
     allowed_domains = ['www.twiter.com']
     # TODO f=tweets can be change for vertical etc
-    URL = "https://twitter.com/i/search/timeline?\
-    f=tweets&q=%s&src=typd&%smax_position=%s"
+    URL = r"https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&%smax_position=%s"
 
     def __init__(self,
                  query='',
@@ -55,6 +55,7 @@ class TweetCrawlerSpider(scrapy.Spider):
         '''create_query use the params from the constructor
         to create the inital query and set the start url'''
         url = self.URL
+        #TODO this maybe can be beneficial for top_tweets
         # if not top_tweets:
         #     url = url + "&f=tweets"
 
@@ -83,4 +84,8 @@ class TweetCrawlerSpider(scrapy.Spider):
 
     def parse(self, response):
         logger.debug("Parsing Response")
+        response = json.loads(response.text)
+        refresh_cursor = response['min_position']
+        logger.debug("refresh_cursor %s" % refresh_cursor)
+
         pass
