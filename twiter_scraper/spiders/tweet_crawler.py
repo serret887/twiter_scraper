@@ -3,7 +3,7 @@ import json
 import logging
 
 import scrapy
-from scrapy import http
+from scrapy import Selector, http
 
 try:
     from urllib import quote  # Python 2.X
@@ -44,14 +44,24 @@ class TweetCrawlerSpider(scrapy.Spider):
         @within=A distance radius between "near" location "20mi"
 '''
         logger.debug("STARTING TWEET SPIDER")
-        self.start_urls = [
-            self.create_query(query, lang, since, until, user_name, '')
-        ]
+
+        self.search_params = {
+            "query": query,
+            "lang": lang,
+            "max_tweets": max_tweets,
+            "since": since,
+            "until": until,
+            "top_tweets": top_tweets,
+            "user_name": user_name,
+            "near": near,
+            "within": within
+        }
+
+        self.start_urls = [self.create_query(refresh_cursor='')]
 
         pass
 
-    def create_query(self, query, lang, since, until, user_name,
-                     refresh_cursor):
+    def create_query(self, refresh_cursor):
         '''create_query use the params from the constructor
         to create the inital query and set the start url'''
         url = self.URL
@@ -62,30 +72,41 @@ class TweetCrawlerSpider(scrapy.Spider):
         # url = url + "&q=%s&src=typed&max_position=%s"
         #
         q = ''
-        if user_name:
-            q += 'from:' + user_name
+        if self.search_params['user_name']:
+            q += 'from:' + self.search_params['user_name']
             logger.debug("Adding user to start url")
-        if since:
-            q += 'since:' + since
+        if self.search_params['since']:
+            q += 'since:' + self.search_params['since']
             logger.debug("Adding since to start url")
-        if until:
-            q += 'until:' + until
+        if self.search_params['until']:
+            q += 'until:' + self.search_params['until']
             logger.debug("Adding until to start url")
-        q += query
-        if q:
+        if self.search_params['query']:
+            q += self.search_params['query']
             logger.debug("query: %s", q)
         else:
+            # here I need to raise a no query exception
             q = 'bitcoin'
             logger.warning("There is no query specified using 'bitcoin'")
-        options = 'lang=' + lang + '&'
+
+        options = 'lang=' + self.search_params['lang'] + '&'
         url = url % (quote(q), options, refresh_cursor)
         logger.info("Start_url:", url)
         return url
 
     def parse(self, response):
         logger.debug("Parsing Response")
-        response = json.loads(response.text)
-        refresh_cursor = response['min_position']
-        logger.debug("refresh_cursor %s" % refresh_cursor)
+        json_response = json.loads(response.text)
 
-        pass
+        for item in self.parse_tweets(json_response['items_html']):
+            logger.debug("Item retrieved")
+            yield item
+
+        refresh_cursor = json_response['min_position']
+        new_url = self.create_query(refresh_cursor)
+        logger.debug("New URL: %s" % new_url)
+
+        yield http.Request(new_url, callback=self.parse)
+
+    def parse_tweets(self, html_tweets):
+        tweets = Selector(text=html_tweets).xpath('//li[@data-item-id]')
