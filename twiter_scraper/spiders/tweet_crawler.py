@@ -34,6 +34,7 @@ class TweetCrawlerSpider(scrapy.Spider):
                  near='',
                  within=''):
         '''
+        TODO create scrapy contracts
         TODO: create the explanation of this crawler
         @query= specify the search query
         @lang=eng by default
