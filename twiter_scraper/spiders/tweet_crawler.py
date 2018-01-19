@@ -4,6 +4,8 @@ import logging
 
 import scrapy
 from scrapy import Selector, http
+from datetime import datetime
+from twiter_scraper.items import Tweet
 
 try:
     from urllib import quote  # Python 2.X
@@ -12,7 +14,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-#TODO create proxy handler
+# TODO create proxy handler
 
 
 class TweetCrawlerSpider(scrapy.Spider):
@@ -65,7 +67,7 @@ class TweetCrawlerSpider(scrapy.Spider):
         '''create_query use the params from the constructor
         to create the inital query and set the start url'''
         url = self.URL
-        #TODO this maybe can be beneficial for top_tweets
+        # TODO this maybe can be beneficial for top_tweets
         # if not top_tweets:
         #     url = url + "&f=tweets"
 
@@ -83,15 +85,15 @@ class TweetCrawlerSpider(scrapy.Spider):
             logger.debug("Adding until to start url")
         if self.search_params['query']:
             q += self.search_params['query']
-            logger.debug("query: %s", q)
+            logger.debug("query: %s" % q)
         else:
             # here I need to raise a no query exception
             q = 'bitcoin'
             logger.warning("There is no query specified using 'bitcoin'")
 
-        options = 'lang=' + self.search_params['lang'] + '&'
+        options = 'lang="' + self.search_params['lang'] + '"&'
         url = url % (quote(q), options, refresh_cursor)
-        logger.info("Start_url:", url)
+        logger.info("Start_url: %s" % url)
         return url
 
     def parse(self, response):
@@ -109,4 +111,48 @@ class TweetCrawlerSpider(scrapy.Spider):
         yield http.Request(new_url, callback=self.parse)
 
     def parse_tweets(self, html_tweets):
-        tweets = Selector(text=html_tweets).xpath('//li[@data-item-id]')
+        logger.debug("Parsing Tweet")
+        tweet_list = Selector(text=html_tweets).xpath('//li[@data-item-id]')
+        # //li[contains(@id, stream-item-tweet)]'
+        for t in tweet_list:
+            logger.debug("Processing Tweets")
+            item = Tweet()
+            item["Id"] = t.xpath('.//@data-tweet-id').extract_first()
+            logger.debug("Tweeter Id:%s" % item["Id"])
+            item["user_id"] = t.xpath(
+                './/span[contains(@class,"username")]/b/text()').extract_first(
+                )
+            logger.debug("User Id:%s" % item["user_id"])
+
+            # TODO: convert to UTC
+            date = t.xpath('.//span/@data-time').extract_first()
+            item["created_date"] = datetime.fromtimestamp(
+                int(date)).strftime('%Y-%m-%d %H:%M:%S')
+
+            logger.debug("Tweet created_date:%s" % item["created_date"])
+
+            item["url"] = t.xpath('.//@data-permalink-path').extract_first()
+
+            logger.debug("URL: {}".format(item["created_date"]))
+
+            # content extraction
+            item["text"] = ' '.join(
+                t.xpath('.//div[contains(@class, "text")]//text()')
+                .extract()).strip()
+            logger.debug("Tweet text: %s" % item["text"])
+            stats = t.xpath(
+                './/span[contains(@class, "actionCount")]/span/text()'
+            ).extract()
+            # #TODO mayber use some contains herekkkk
+            for stat in stats:
+                v, k = stat.strip().split()
+                logger.debug("{}:{}".format(k, v))
+                item[k] = v if v else 0
+
+            # get photo
+
+            item["images"] = t.xpath(".//*/div/@data-image-url").extract()
+            logger.debug("Tweet images: %s" % item["images"])
+            item["cards"] = t.xpath('.//*/div/@data-card-url').extract()
+            logger.debug("cards: {}".format(item["cards"]))
+            yield item
