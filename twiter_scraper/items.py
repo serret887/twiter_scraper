@@ -12,7 +12,7 @@ from scrapy import Field, Item
 
 class Tweet(Item):
     Id = Field()  # tweet id
-    url = Field()  # tweet url
+    permanent_link = Field()  # tweet url
     created_date = Field()  # tweet posted time UTC
     text = Field()  # text content
     user_id = Field()  # user id
@@ -25,7 +25,7 @@ class Tweet(Item):
     cards = Field()  # a list of cards
 
     def __str__(self):
-        return json.dumps(self)
+        return json.dump(self)
 
 
 class User(Item):
@@ -40,4 +40,4 @@ class User(Item):
     like_amount = Field()
 
     def __str__(self):
-        return json.dumps(self)
+        return json.dump(self)
