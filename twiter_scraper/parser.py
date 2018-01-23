@@ -46,8 +46,8 @@ def parse_tweets(html_tweets, logger):
         # #TODO mayber use some contains here
         for stat in stats:
             v, k = stat.strip().split()
-            logger.debug("{}:{}".format(k, v))
-            item[k] = v if v else 0
+            logger.debug("Tweet Stats: {}:{}".format(k, v))
+            item[k.lower() + "_amount"] = v if v else 0
 
         # get photo
 
@@ -72,4 +72,10 @@ def parse_users(response, logger):
     user["description"] = html.xpath(
         './/p[contains(@class, "bio")]/text()').extract_first()
 
-    stats = html.xpath('.//')
+    stats = html.xpath(
+        './/a[contains(@class,"ProfileCardStats-statLink")]/@title').extract()
+
+    for stat in stats:
+        v, k = stat.strip().split()
+        logger.debug("User Stats: {}:{}".format(k, v))
+        user[k.lower() + "_amount"] = v if v else 0
