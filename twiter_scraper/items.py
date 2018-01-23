@@ -17,15 +17,12 @@ class Tweet(Item):
     text = Field()  # text content
     user_id = Field()  # user id
 
-    retweets = Field()  # No of retweet
-    likes = Field()  # No of favorite
-    replies = Field()  # No of reply
+    retweets_amount = Field()  # No of retweet
+    likes_amount = Field()  # No of favorite
+    replies_amount = Field()  # No of reply
 
     images = Field()  # a list of image urls
     cards = Field()  # a list of cards
-
-    def __str__(self):
-        return json.dumps(self)
 
 
 class User(Item):
@@ -39,6 +36,3 @@ class User(Item):
     following_amount = Field()
     followers_amount = Field()
     like_amount = Field()
-
-    def __str__(self):
-        return json.dumps(self)

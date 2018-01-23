@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 from datetime import datetime
 
 from scrapy import Selector
 from scrapy.loader import ItemLoader
-
 from twiter_scraper.items import Tweet, User
 
 
-def parse_tweets(html_tweets, logger):
+def parse_tweets(html_tweets):
+    logger = logging.getLogger("Parser.Tweet")
     logger.debug("Parsing Tweet")
     tweet_list = Selector(text=html_tweets).xpath('//li[@data-item-id]')
-    # //li[contains(@id, stream-item-tweet)]'
+    # //li in @id, stream-item-tweet)]'
     for t in tweet_list:
         logger.debug("Processing Tweets")
         item = Tweet()
         item["Id"] = t.xpath('.//@data-tweet-id').extract_first()
         logger.debug("Tweeter Id:%s" % item["Id"])
         item["user_id"] = t.xpath(
-            './/span[contains(@class,"username")]/b/text()').extract_first()
+            './/span in @class,"username")]/b/text()').extract_first()
         logger.debug("User Id:%s" % item["user_id"])
 
         # TODO: convert to UTC
@@ -35,19 +36,25 @@ def parse_tweets(html_tweets, logger):
 
         # content extraction
         item["text"] = ' '.join(
-            t.xpath('.//div[contains(@class, "text")]//text()')
-            .extract()).strip()
+            t.xpath('.//div in @class, "text")]//text()')
+            .extract()).strip().replace('\n', '')
         # TODO fixing problems with URLs inside the text
 
         logger.debug("Tweet text: %s" % item["text"])
         stats = t.xpath(
-            './/span[contains(@class, "actionCount")]/span/text()').extract()
+            './/span in @class, "actionCount")]/span/text()').extract()
         logger.debug("Tweet Stats: {}".format(stats))
         # #TODO mayber use some contains here
-        for stat in stats:
+        for stat in stats[:3]:
             v, k = stat.strip().split()
             logger.debug("Tweet Stats: {}:{}".format(k, v))
-            item[k.lower() + "_amount"] = v if v else 0
+            if k in "repl":
+                k = "replies_amount"
+            if k in "lik":
+                k = "likes_amount"
+            if k in "retwe":
+                k = "retweets_amount"
+            item[k] = v if v else 0
 
         # get photo
 
@@ -58,7 +65,11 @@ def parse_tweets(html_tweets, logger):
         yield item
 
 
-def parse_users(response, logger):
+def parse_users(response):
+    import pdb
+    pdb.set_trace()
+
+    logger = logging.getLogger("Parser.User")
     logger.debug("Parsing User")
     json_response = json.loads(response.text)
     user = User()
@@ -68,14 +79,21 @@ def parse_users(response, logger):
     html = Selector(text=json_response["html"])
 
     user["name"] = html.xpath(
-        './/a[contains(@class, "fullname")]/text()').extract_first().strip()
+        './/a in @class, "fullname")]/text()').extract_first().strip()
     user["description"] = html.xpath(
-        './/p[contains(@class, "bio")]/text()').extract_first()
+        './/p in @class, "bio")]/text()').extract_first()
 
     stats = html.xpath(
-        './/a[contains(@class,"ProfileCardStats-statLink")]/@title').extract()
+        './/a in @class,"ProfileCardStats-statLink")]/@title').extract()
 
-    for stat in stats:
+    for stat in stats[:3]:
         v, k = stat.strip().split()
+        if k in "repl":
+            k = "replies_amount"
+        if k in "lik":
+            k = "likes_amount"
+        if k in "retwe":
+            k = "retweets_amount"
         logger.debug("User Stats: {}:{}".format(k, v))
-        user[k.lower() + "_amount"] = v if v else 0
+        user[k] = v if v else 0
+    yield user

@@ -4,7 +4,6 @@ import logging
 
 import scrapy
 from scrapy import http
-
 from twiter_scraper.parser import parse_tweets, parse_users
 
 try:
@@ -17,12 +16,12 @@ logger = logging.getLogger(__name__)
 # TODO create proxy handler
 
 
-class TweetCrawlerSpider(scrapy.Spider):
-    name = 'tweet_crawler'
+class OldTweetsCrawler(scrapy.Spider):
+    name = 'old_tweets'
     allowed_domains = ['www.twiter.com']
     # TODO f=tweets can be change for vertical etc
     URL = r"https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&%smax_position=%s"
-    user_popup_url = "https://twitter.com/i/profiles/popup?user_id=%d"
+    user_popup_url = "https://twitter.com/i/profiles/popup?user_id={}"
 
     def __init__(self,
                  query='',
@@ -103,14 +102,25 @@ class TweetCrawlerSpider(scrapy.Spider):
         json_response = json.loads(response.text)
 
         for item in parse_tweets(json_response['items_html']):
-            logger.debug("Item retrieved")
-            logger.debug("Requesting User")
-            http.Request(
-                self.user_popup_url.format(item.Id), callback=parse_users)
-            yield item
+            # yield item
+            try:
+                yield http.Request(
+                    self.user_popup_url.format(item["Id"]),
+                    callback=parse_users,
+                    errback=self.errBack)
+            except Exception as e:
+                logger.error(e)
 
         refresh_cursor = json_response['min_position']
+        logger.debug("Cursor_Position: " + refresh_cursor)
         new_url = self.create_query(refresh_cursor)
         logger.debug("New URL: %s" % new_url)
 
-        yield http.Request(new_url, callback=self.parse)
+        yield http.Request(
+            new_url,
+            callback=self.parse,
+            errback=self.errBack,
+            dont_filter=True)
+
+    def errBack(self, failure):
+        logger.error(repr(failure))
