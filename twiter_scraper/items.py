@@ -25,19 +25,20 @@ class Tweet(Item):
     cards = Field()  # a list of cards
 
     def __str__(self):
-        return json.dump(self)
+        return json.dumps(self)
 
 
 class User(Item):
     Id = Field()  # user id
-    name = Field()  # user name
-    screen_name = Field()  # user screen name
+    user_name = Field()  # user name
+    description = Field()  # description of the person
     avatar = Field()  # avatar url
+    name = Field()  # name of the person
 
     tweets_amount = Field()
     following_amount = Field()
-    follower_amount = Field()
+    followers_amount = Field()
     like_amount = Field()
 
     def __str__(self):
-        return json.dump(self)
+        return json.dumps(self)
