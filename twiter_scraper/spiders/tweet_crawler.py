@@ -4,6 +4,7 @@ import logging
 
 import scrapy
 from scrapy import http
+
 from twiter_scraper.parser import parse_tweets, parse_users
 
 try:
@@ -21,6 +22,7 @@ class TweetCrawlerSpider(scrapy.Spider):
     allowed_domains = ['www.twiter.com']
     # TODO f=tweets can be change for vertical etc
     URL = r"https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&%smax_position=%s"
+    user_popup_url = "https://twitter.com/i/profiles/popup?user_id=%d"
 
     def __init__(self,
                  query='',
@@ -102,6 +104,9 @@ class TweetCrawlerSpider(scrapy.Spider):
 
         for item in parse_tweets(json_response['items_html']):
             logger.debug("Item retrieved")
+            logger.debug("Requesting User")
+            http.Request(
+                self.user_popup_url.format(item.Id), callback=parse_users)
             yield item
 
         refresh_cursor = json_response['min_position']
