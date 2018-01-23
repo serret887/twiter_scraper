@@ -61,7 +61,7 @@ class OldTweetsCrawler(scrapy.Spider):
         }
 
         self.start_urls = [self.create_query(refresh_cursor='')]
-
+        logger.info("Start_url: %s" % self.start_urls[0])
         pass
 
     def create_query(self, refresh_cursor):
@@ -94,7 +94,6 @@ class OldTweetsCrawler(scrapy.Spider):
 
         options = 'lang="' + self.search_params['lang'] + '"&'
         url = url % (quote(q), options, refresh_cursor)
-        logger.info("Start_url: %s" % url)
         return url
 
     def parse(self, response):
@@ -109,11 +108,7 @@ class OldTweetsCrawler(scrapy.Spider):
                     callback=parse_users,
                     errback=self.errBack)
             except Exception as e:
-                import pdb
-                pdb.set_trace()
                 logger.error(e)
-            import pdb
-            pdb.set_trace()
 
         refresh_cursor = json_response['min_position']
         logger.debug("Cursor_Position: " + refresh_cursor)

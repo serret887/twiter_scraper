@@ -17,7 +17,9 @@ SPIDER_MODULES = ['twiter_scraper.spiders']
 NEWSPIDER_MODULE = 'twiter_scraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'firefox'
+# USER_AGENT = 'firefox'
+RANDOM_UA_TYPE = 'desktop'
+FAKEUSERAGENT_FALLBACK = 'Mozilla'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
