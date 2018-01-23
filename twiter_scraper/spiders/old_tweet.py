@@ -105,11 +105,15 @@ class OldTweetsCrawler(scrapy.Spider):
             # yield item
             try:
                 yield http.Request(
-                    self.user_popup_url.format(item["Id"]),
+                    self.user_popup_url.format(item["user_id"]),
                     callback=parse_users,
                     errback=self.errBack)
             except Exception as e:
+                import pdb
+                pdb.set_trace()
                 logger.error(e)
+            import pdb
+            pdb.set_trace()
 
         refresh_cursor = json_response['min_position']
         logger.debug("Cursor_Position: " + refresh_cursor)

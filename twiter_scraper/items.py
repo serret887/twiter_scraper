@@ -16,6 +16,7 @@ class Tweet(Item):
     created_date = Field()  # tweet posted time UTC
     text = Field()  # text content
     user_id = Field()  # user id
+    user_name = Field()  # user name
 
     retweets_amount = Field()  # No of retweet
     likes_amount = Field()  # No of favorite

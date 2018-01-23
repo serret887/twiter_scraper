@@ -18,9 +18,13 @@ def parse_tweets(html_tweets):
         item = Tweet()
         item["Id"] = t.xpath('.//@data-tweet-id').extract_first()
         logger.debug("Tweeter Id:%s" % item["Id"])
+        item["user_name"] = t.xpath(
+            './/span[contains(@class,"username")]/b/text()').extract_first()
+        logger.debug("User name:%s" % item["user_name"])
+
         item["user_id"] = t.xpath(
-            './/span in @class,"username")]/b/text()').extract_first()
-        logger.debug("User Id:%s" % item["user_id"])
+            './/a[@data-user-id]/@data-user-id').extract_first()
+        logger.debug("User name:%s" % item["user_id"])
 
         # TODO: convert to UTC
         date = t.xpath('.//span/@data-time').extract_first()
@@ -36,23 +40,23 @@ def parse_tweets(html_tweets):
 
         # content extraction
         item["text"] = ' '.join(
-            t.xpath('.//div in @class, "text")]//text()')
+            t.xpath('.//div[contains(@class, "text")]//text()')
             .extract()).strip().replace('\n', '')
         # TODO fixing problems with URLs inside the text
 
         logger.debug("Tweet text: %s" % item["text"])
         stats = t.xpath(
-            './/span in @class, "actionCount")]/span/text()').extract()
+            './/span[contains(@class, "actionCount")]/span/text()').extract()
         logger.debug("Tweet Stats: {}".format(stats))
         # #TODO mayber use some contains here
         for stat in stats[:3]:
             v, k = stat.strip().split()
             logger.debug("Tweet Stats: {}:{}".format(k, v))
-            if k in "repl":
+            if "repl" in k:
                 k = "replies_amount"
-            if k in "lik":
+            if "lik" in k:
                 k = "likes_amount"
-            if k in "retwe":
+            if "retwe" in k:
                 k = "retweets_amount"
             item[k] = v if v else 0
 
@@ -79,20 +83,20 @@ def parse_users(response):
     html = Selector(text=json_response["html"])
 
     user["name"] = html.xpath(
-        './/a in @class, "fullname")]/text()').extract_first().strip()
+        './/a[contains(@class, "fullname")]/text()').extract_first().strip()
     user["description"] = html.xpath(
-        './/p in @class, "bio")]/text()').extract_first()
+        './/p[contains(@class, "bio")]/text()').extract_first()
 
     stats = html.xpath(
-        './/a in @class,"ProfileCardStats-statLink")]/@title').extract()
+        './/a[contains(@class,"ProfileCardStats-statLink")]/@title').extract()
 
     for stat in stats[:3]:
         v, k = stat.strip().split()
-        if k in "repl":
+        if "repl" in k:
             k = "replies_amount"
-        if k in "lik":
+        if "lik" in k:
             k = "likes_amount"
-        if k in "retwe":
+        if "retwe" in k:
             k = "retweets_amount"
         logger.debug("User Stats: {}:{}".format(k, v))
         user[k] = v if v else 0
