@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-
+import json
 from datetime import datetime
 
 from scrapy import Selector
-from twiter_scraper.items import Tweet
+from scrapy.loader import ItemLoader
+
+from twiter_scraper.items import Tweet, User
 
 
-def parse_tweets(self, html_tweets, logger):
+def parse_tweets(html_tweets, logger):
     logger.debug("Parsing Tweet")
     tweet_list = Selector(text=html_tweets).xpath('//li[@data-item-id]')
     # //li[contains(@id, stream-item-tweet)]'
@@ -54,3 +56,20 @@ def parse_tweets(self, html_tweets, logger):
         item["cards"] = t.xpath('.//*/div/@data-card-url').extract()
         logger.debug("cards: {}".format(item["cards"]))
         yield item
+
+
+def parse_users(response, logger):
+    logger.debug("Parsing User")
+    json_response = json.loads(response.text)
+    user = User()
+    user["Id"] = json_response["user_id"]
+    user["user_name"] = json_response["screen_name"]
+
+    html = Selector(text=json_response["html"])
+
+    user["name"] = html.xpath(
+        './/a[contains(@class, "fullname")]/text()').extract_first().strip()
+    user["description"] = html.xpath(
+        './/p[contains(@class, "bio")]/text()').extract_first()
+
+    stats = html.xpath('.//')
