@@ -20,7 +20,6 @@ def parse_tweets(html_tweets):
         tweet["user_id"] = t.xpath(
             './/a[@data-user-id]/@data-user-id').extract_first()
 
-        # TODO: convert to UTC
         date = t.xpath('.//span/@data-time').extract_first()
         tweet["created_date"] = datetime.fromtimestamp(
             int(date)).strftime('%Y-%m-%d %H:%M:%S')
@@ -53,7 +52,7 @@ def parse_tweets(html_tweets):
         tweet["images"] = t.xpath(".//*/div/@data-image-url").extract()
         tweet["cards"] = t.xpath('.//*/div/@data-card-url').extract()
         logger.info("Tweet parsed {}".format(tweet["Id"]))
-        logger.debug(repr(tweet.__dict__))
+        # logger.debug(repr(tweet.__dict__))
         yield tweet
 
 

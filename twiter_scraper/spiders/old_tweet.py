@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class OldTweetsCrawler(scrapy.Spider):
     name = 'old_tweets'
-    allowed_domains = ['twiter.com']
+    allowed_domains = ['twitter.com']
     # TODO f=tweets can be change for vertical etc
     URL = r"https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&%smax_position=%s"
     user_popup_url = "https://twitter.com/i/profiles/popup?user_id={}"
@@ -107,7 +107,8 @@ class OldTweetsCrawler(scrapy.Spider):
                     self.user_popup_url.format(item["user_id"]),
                     callback=parse_users,
                     errback=self.errBack,
-                    dont_filter=True)
+                    #    dont_filter=True
+                )
             except Exception as e:
                 logger.error(e)
 
@@ -115,14 +116,13 @@ class OldTweetsCrawler(scrapy.Spider):
         logger.debug("Cursor_Position: " + refresh_cursor)
         new_url = self.create_query(refresh_cursor)
         logger.info("New URL: %s" % new_url)
-        import pdb
-        pdb.set_trace()
 
         yield http.Request(
             new_url,
             callback=self.parse,
             errback=self.errBack,
-            dont_filter=True)
+            #    dont_filter=True
+        )
 
     def errBack(self, failure):
         logger.error(repr(failure))
