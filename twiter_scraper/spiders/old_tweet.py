@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class OldTweetsCrawler(scrapy.Spider):
     name = 'old_tweets'
-    allowed_domains = ['www.twiter.com']
+    allowed_domains = ['twiter.com']
     # TODO f=tweets can be change for vertical etc
     URL = r"https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&%smax_position=%s"
     user_popup_url = "https://twitter.com/i/profiles/popup?user_id={}"
@@ -90,30 +90,33 @@ class OldTweetsCrawler(scrapy.Spider):
         else:
             # here I need to raise a no query exception
             q = 'bitcoin'
-            logger.warning("There is no query specified using 'bitcoin'")
+            logger.warning(
+                "There is no query specified using 'bitcoin' as default")
 
         options = 'lang="' + self.search_params['lang'] + '"&'
-        url = url % (quote(q), options, refresh_cursor)
-        return url
+        new_url = url % (quote(q), options, refresh_cursor)
+        return new_url
 
     def parse(self, response):
         logger.debug("Parsing Response")
         json_response = json.loads(response.text)
-
         for item in parse_tweets(json_response['items_html']):
             # yield item
             try:
                 yield http.Request(
                     self.user_popup_url.format(item["user_id"]),
                     callback=parse_users,
-                    errback=self.errBack)
+                    errback=self.errBack,
+                    dont_filter=True)
             except Exception as e:
                 logger.error(e)
 
         refresh_cursor = json_response['min_position']
         logger.debug("Cursor_Position: " + refresh_cursor)
         new_url = self.create_query(refresh_cursor)
-        logger.debug("New URL: %s" % new_url)
+        logger.info("New URL: %s" % new_url)
+        import pdb
+        pdb.set_trace()
 
         yield http.Request(
             new_url,

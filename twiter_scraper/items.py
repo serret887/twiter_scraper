@@ -5,8 +5,6 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/items.html
 
-import json
-
 from scrapy import Field, Item
 
 
@@ -36,4 +34,4 @@ class User(Item):
     tweets_amount = Field()
     following_amount = Field()
     followers_amount = Field()
-    like_amount = Field()
+    likes_amount = Field()
